@@ -1,0 +1,19 @@
+{
+  "name": "katana",
+  "version": "1.0.0",
+  "description": "node.js/express/socket.io-based engine for whiteboard apps",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nbeerbower/katana.git"
+  },
+  "author": "Nicholas S. Beerbower",
+  "license": "LGPL-2.1",
+  "bugs": {
+    "url": "https://github.com/nbeerbower/katana/issues"
+  },
+  "homepage": "https://github.com/nbeerbower/katana#readme"
+}
