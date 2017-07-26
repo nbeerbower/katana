@@ -2,7 +2,7 @@
 node.js/express/socket.io-based engine for whiteboard apps
 
 ## Setup
-```npm install
+```npm install```
 
 ## Run
-```node server.js
+```node server.js```
