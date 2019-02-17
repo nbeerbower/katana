@@ -21,9 +21,17 @@ mongo.connect('mongodb://localhost:27017/katana', (error, db) => {
 		socket.on('paint', (data) => {
 			data.timestamp = new Date();
 			db.collection('paint').save(data, (error, result) => {
-				if (error) console.log(error);
+				if (error) console.error(error);
 			});
 			socket.broadcast.emit('paint', data);
+		});
+
+		socket.on('clear', () => {
+			db.collection('paint').drop((error, result) => {
+				if (error) console.error(error);
+				if (result) console.log("Drawings cleared!");
+			});
+			socket.broadcast.emit('clear');
 		});
 	}
 

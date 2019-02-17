@@ -3,12 +3,13 @@
 (function() {
 
   var socket = io();
-  var canvas = document.getElementsByClassName('whiteboard')[0];
-  var colors = document.getElementsByClassName('color');
+  var canvas = document.getElementsByClassName('kat-whiteboard')[0];
   var context = canvas.getContext('2d');
+  var colorButton = document.getElementsByClassName('kat-color')[0];
+  var clearButton = document.getElementsByClassName('kat-clear')[0];
 
   var current = {
-    color: 'black'
+    color: '#000000'
   };
   var drawing = false;
 
@@ -19,16 +20,19 @@
   canvas.addEventListener('mouseout', onMouseUp, false);
   canvas.addEventListener('mousemove', throttle(onMouseMove, 10), false);
 
-  for (var i = 0; i < colors.length; i++){
-    colors[i].addEventListener('click', onColorUpdate, false);
-  }
+  clearButton.addEventListener('click', onClearButtonPress, false);
 
   socket.on('init', onInit);
   socket.on('paint', onDrawingEvent);
+  socket.on('clear', onClear);
 
   window.addEventListener('resize', onResize, false);
   onResize();
 
+  function onClearButtonPress() {
+    socket.emit('clear');
+    onClear();
+  }
 
   function drawLine(x0, y0, x1, y1, color, emit){
     context.beginPath();
@@ -73,10 +77,6 @@
     current.y = e.clientY;
   }
 
-  function onColorUpdate(e){
-    current.color = e.target.className.split(' ')[1];
-  }
-
   // limit the number of events per second
   function throttle(callback, delay) {
     var previousCall = new Date().getTime();
@@ -109,7 +109,7 @@
   function redraw() {
     var w = canvas.width;
     var h = canvas.height;
-    for (i = 0; i < drawings.length; i++) {
+    for (var i = 0; i < drawings.length; i++) {
       drawLine(drawings[i].x0 * w, drawings[i].y0 * h, drawings[i].x1 * w, drawings[i].y1 * h, drawings[i].color);
     }
   }

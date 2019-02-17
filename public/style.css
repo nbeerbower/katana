@@ -17,7 +17,7 @@ html, body {
  * Canvas
  */
 
-.whiteboard {
+.kat-whiteboard {
   height: 100%;
   width: 100%;
   position: absolute;
@@ -27,18 +27,18 @@ html, body {
   top: 0;
 }
 
-.icon {
+.kat-icon {
   position: fixed;
   height: 48px;
   width: 48px;
 }
 
-.color {
+.kat-color {
   top: 0;
   right: 0;
 }
 
-.clear {
+.kat-clear {
   bottom: 0;
   left: 0;
 }
