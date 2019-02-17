@@ -10,8 +10,8 @@
     "type": "git",
     "url": "git+https://github.com/nbeerbower/katana.git"
   },
-  "author": "Nicholas S. Beerbower",
-  "license": "LGPL-2.1",
+  "author": "Nicholas Beerbower",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/nbeerbower/katana/issues"
   },

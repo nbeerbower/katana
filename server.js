@@ -12,32 +12,18 @@ mongo.connect('mongodb://localhost:27017/katana', (error, db) => {
 
 	function onConnection(socket) {
 		console.log('client connected');
-		db.collection('object').find().sort({timestamp:1}).forEach((data, error) => {
-			socket.emit('object_new', data);
-			if (error) console.log('Failed to get initial objects');
+		// initialize new client with all previous paints
+		db.collection('paint').find().sort({timestamp:1}).toArray((error, result) => {
+			socket.emit('init', result);
+			if (error) console.error(error);
 		});
 
-		socket.on('object_new', (data) => {
+		socket.on('paint', (data) => {
 			data.timestamp = new Date();
-			db.collection('object').save(data, (error, result) => {
-				if (error) console.log('failed to write to DB');
+			db.collection('paint').save(data, (error, result) => {
+				if (error) console.log(error);
 			});
-			socket.broadcast.emit('object', data);
-		});
-
-		socket.on('object_update', (data) => {
-			data.timestamp = new Date();
-			var id = data._id;
-			delete data._id;
-			console.log(data);
-			db.collection('object').update({"_id": id}, {$set: data}, (error, result) => {
-				if (error) console.log('failed to write to DB');
-			});
-			db.collection('object').findOne({"_id": id}, (error, result) => {
-				if (error) console.log('failed to read from DB');
-				console.log(result);
-				socket.broadcast.emit('object_update', result);
-			});
+			socket.broadcast.emit('paint', data);
 		});
 	}
 

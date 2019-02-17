@@ -1,127 +1,125 @@
+'use strict';
 
 (function() {
+
   var socket = io();
-  var katanaCanvas = $('.kat-canvas');
+  var canvas = document.getElementsByClassName('whiteboard')[0];
+  var colors = document.getElementsByClassName('color');
+  var context = canvas.getContext('2d');
 
-  socket.on('object_new', onObjectNewEvent);
-  socket.on('object_update', onObjectUpdateEvent);
+  var current = {
+    color: 'black'
+  };
+  var drawing = false;
 
-  function onObjectNewEvent(data) {
-    drawNewObject(data);
+  var drawings = [];
+
+  canvas.addEventListener('mousedown', onMouseDown, false);
+  canvas.addEventListener('mouseup', onMouseUp, false);
+  canvas.addEventListener('mouseout', onMouseUp, false);
+  canvas.addEventListener('mousemove', throttle(onMouseMove, 10), false);
+
+  for (var i = 0; i < colors.length; i++){
+    colors[i].addEventListener('click', onColorUpdate, false);
   }
 
-  function onObjectUpdateEvent(data) {
-    updateObject(data);
-  }
+  socket.on('init', onInit);
+  socket.on('paint', onDrawingEvent);
 
-  function getObjectStyle(object) {
-    return 'transform: translate(' + object.x + 'px,' + object.y + 'px);'
-                + 'width: ' + object.width + 'px; height: ' + object.height + 'px;';
-  }
+  window.addEventListener('resize', onResize, false);
+  onResize();
 
-  function drawNewObject(object) {
-    console.log(object);
-    katanaCanvas.append("<div id='" + object._id + "'"
-                        + " class='kat-object kat-sticky'"
-                        + " data-x='" + object.x + "' data-y='" + object.y + "'"
-                        + " style='" + getObjectStyle(object) + "'"
-                        + ">"
-                        + object.text +"</div>");
-  }
 
-  function updateObject(object) {
-    var element = $('#'+object._id);
-    if (!element.length) {
-      drawNewObject(object);
-      return;
-    }
-    var style = getObjectStyle(object);
-    element.attr('data-x', object.x);
-    element.attr('data-y', object.y);
-    element.attr('style', style);
-    element.text(object.text);
-  }
+  function drawLine(x0, y0, x1, y1, color, emit){
+    context.beginPath();
+    context.moveTo(x0, y0);
+    context.lineTo(x1, y1);
+    context.strokeStyle = color;
+    context.lineWidth = 2;
+    context.stroke();
+    context.closePath();
 
-  $('#new-button').click(function() {
-    var katanaId = Math.floor(Date.now() / 1000);
-    var defaultObject = {
-      "_id": katanaId,
-    	"x": 10,
-    	"y": 10,
-    	"width": 100,
-    	"height": 100,
-    	"text": 'hello world!'
+    if (!emit) { return; }
+    var w = canvas.width;
+    var h = canvas.height;
+
+    var paintObject = {
+      x0: x0 / w,
+      y0: y0 / h,
+      x1: x1 / w,
+      y1: y1 / h,
+      color: color
     };
-    drawNewObject(defaultObject);
-    socket.emit('object_new', defaultObject);
-  });
-
-  interact('.kat-object')
-  .draggable({
-    // Make objects draggable
-    inertia: true,
-    restrict: {
-      restriction: "parent",
-      endOnly: true,
-      elementRect: { top: 0, left: 0, bottom: 1, right: 1 }
-    },
-    autoScroll: true,
-    onmove: dragMoveListener,
-    onend: function (event) {
-      console.log(event.target);
-      console.log(event.target.id);
-      // Update object coordinates serverside
-      // event.dx and event.dy
-      newObjectPosition = {
-        "_id": event.target.id,
-        "x": event.dx,
-        "y": event.dy
-      };
-      socket.emit('object_update', newObjectPosition);
-    }})
-    .resizable({
-      // Make objects resizable
-      preserveAspectRatio: false,
-      edges: { left: true, right: true, bottom: true, top: true }
-    })
-    .on('resizemove', function (event) {
-      var target = event.target,
-          x = (parseFloat(target.getAttribute('data-x')) || 0),
-          y = (parseFloat(target.getAttribute('data-y')) || 0);
-
-      target.style.width  = event.rect.width + 'px';
-      target.style.height = event.rect.height + 'px';
-
-      x += event.deltaRect.left;
-      y += event.deltaRect.top;
-
-      target.style.webkitTransform = target.style.transform =
-          'translate(' + x + 'px,' + y + 'px)';
-
-      target.setAttribute('data-x', x);
-      target.setAttribute('data-y', y);
-    })
-    .on('resizeend', function (event) {
-      // Update object size serverside
-      // event.rect.width and event.rect.height
-      newObjectSize = {
-        "_id": event.target.id,
-        "width": event.dx,
-        "height": event.dy
-      };
-      socket.emit('object_update', newObjectSize);
-    });
-
-  function dragMoveListener (event) {
-    var target = event.target,
-        x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
-        y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
-
-    target.style.webkitTransform =
-    target.style.transform =
-      'translate(' + x + 'px, ' + y + 'px)';
-
-    target.setAttribute('data-x', x);
-    target.setAttribute('data-y', y);
+    socket.emit('paint', paintObject);
+    drawings.push(paintObject);
   }
+
+  function onMouseDown(e){
+    drawing = true;
+    current.x = e.clientX;
+    current.y = e.clientY;
+  }
+
+  function onMouseUp(e){
+    if (!drawing) { return; }
+    drawing = false;
+    drawLine(current.x, current.y, e.clientX, e.clientY, current.color, true);
+  }
+
+  function onMouseMove(e){
+    if (!drawing) { return; }
+    drawLine(current.x, current.y, e.clientX, e.clientY, current.color, true);
+    current.x = e.clientX;
+    current.y = e.clientY;
+  }
+
+  function onColorUpdate(e){
+    current.color = e.target.className.split(' ')[1];
+  }
+
+  // limit the number of events per second
+  function throttle(callback, delay) {
+    var previousCall = new Date().getTime();
+    return function() {
+      var time = new Date().getTime();
+
+      if ((time - previousCall) >= delay) {
+        previousCall = time;
+        callback.apply(null, arguments);
+      }
+    };
+  }
+
+  function onInit(data) {
+    drawings = [].concat(data);
+    redraw();
+  }
+
+  function onDrawingEvent(data) {
+    var w = canvas.width;
+    var h = canvas.height;
+    drawLine(data.x0 * w, data.y0 * h, data.x1 * w, data.y1 * h, data.color);
+  }
+
+  function onClear() {
+    drawings = [];
+    context.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function redraw() {
+    var w = canvas.width;
+    var h = canvas.height;
+    for (i = 0; i < drawings.length; i++) {
+      drawLine(drawings[i].x0 * w, drawings[i].y0 * h, drawings[i].x1 * w, drawings[i].y1 * h, drawings[i].color);
+    }
+  }
+
+  // make the canvas fill its parent
+  function onResize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    redraw();
+  }
+
 })();
