@@ -13,4 +13,6 @@ Start MongoDB on port `3000` or set the `PORT` environment variable.
 
 ## Attributions
 
+[a-color-picker](https://narsenico.github.io/a-color-picker/)
+
 [Palette](https://www.flaticon.com/free-icon/palette_167723) and [Spray](https://www.flaticon.com/free-icon/spray_1169360) icon by [Freepik](https://www.freepik.com/)

@@ -42,3 +42,16 @@ html, body {
   bottom: 0;
   left: 0;
 }
+
+.kat-color-picker {
+  display: none;
+  position: fixed;
+  top: 50px;
+  right: 0;
+  box-shadow: 0 2px 2px 0 rgba(0,0,0,0.16), 0 0 0 1px rgba(3, 1, 1, 0.08);
+  z-index: 999;
+}
+
+.kat-is-visible {
+	display: block !important;
+}

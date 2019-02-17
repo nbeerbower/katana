@@ -15,11 +15,17 @@
 
   var drawings = [];
 
+  var colorPicker = AColorPicker.from('.kat-color-picker');
+  colorPicker.on('change', (picker, color) => {
+    current.color = color;
+  });
+
   canvas.addEventListener('mousedown', onMouseDown, false);
   canvas.addEventListener('mouseup', onMouseUp, false);
   canvas.addEventListener('mouseout', onMouseUp, false);
   canvas.addEventListener('mousemove', throttle(onMouseMove, 10), false);
 
+  colorButton.addEventListener('click', onColorButtonPress, false);
   clearButton.addEventListener('click', onClearButtonPress, false);
 
   socket.on('init', onInit);
@@ -28,6 +34,14 @@
 
   window.addEventListener('resize', onResize, false);
   onResize();
+
+  function toggleVisibility(element) {
+    element.classList.toggle('kat-is-visible');
+  }
+
+  function onColorButtonPress() {
+    toggleVisibility(document.getElementsByClassName('kat-color-picker')[0]);
+  }
 
   function onClearButtonPress() {
     socket.emit('clear');
